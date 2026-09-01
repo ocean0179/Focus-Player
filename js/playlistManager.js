@@ -64,8 +64,19 @@ export class PlaylistManager {
 
   renamePlaylist(key, name) {
     const playlist = this.requirePlaylist(key);
+    const normalizedName = this.validateName(name);
+    const hasSameName = Object.entries(this.playlists).some(
+      ([playlistKey, existingPlaylist]) =>
+        playlistKey !== key &&
+        existingPlaylist.name.toLocaleLowerCase() ===
+          normalizedName.toLocaleLowerCase()
+    );
 
-    playlist.name = this.validateName(name);
+    if (hasSameName) {
+      throw new Error(`Playlist name already exists: ${normalizedName}`);
+    }
+
+    playlist.name = normalizedName;
     this.save();
 
     return this.getPlaylist(key);
@@ -81,6 +92,19 @@ export class PlaylistManager {
   addTrack(key, track) {
     const playlist = this.requirePlaylist(key);
     const validTrack = this.validateTrack(track);
+
+    const hasDuplicateVideo = playlist.tracks.some(
+      (existingTrack) =>
+        existingTrack.videoId.trim() === validTrack.videoId
+    );
+
+    if (hasDuplicateVideo) {
+      const error = new Error(
+        `Track already exists in playlist: ${validTrack.videoId}`
+      );
+      error.code = "DUPLICATE_TRACK";
+      throw error;
+    }
 
     playlist.tracks.push(validTrack);
     this.save();

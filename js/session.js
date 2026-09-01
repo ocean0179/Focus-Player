@@ -21,11 +21,21 @@ export class SessionManager {
     return this.settings.breakDuration;
   }
 
-  moveToNextSession() {
+  completeCurrentSession() {
     if (this.currentType === SESSION_TYPE.FOCUS) {
       this.completedFocusSessions += 1;
-      this.currentType = SESSION_TYPE.BREAK;
+    }
 
+    this.advanceToNextSession();
+  }
+
+  skipCurrentSession() {
+    this.advanceToNextSession();
+  }
+
+  advanceToNextSession() {
+    if (this.currentType === SESSION_TYPE.FOCUS) {
+      this.currentType = SESSION_TYPE.BREAK;
       return;
     }
 

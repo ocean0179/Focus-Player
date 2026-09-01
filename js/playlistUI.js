@@ -35,6 +35,12 @@ export class PlaylistUI {
     this.deletePlaylistBtn = document.getElementById(
       "deleteManagedPlaylistBtn"
     );
+    this.renamePlaylistForm = document.getElementById(
+      "renamePlaylistForm"
+    );
+    this.renamePlaylistInput = document.getElementById(
+      "renamePlaylistInput"
+    );
     this.trackList = document.getElementById("managedTrackList");
     this.addTrackForm = document.getElementById("addTrackForm");
     this.trackUrlInput = document.getElementById("trackUrlInput");
@@ -46,10 +52,14 @@ export class PlaylistUI {
     this.onClose = null;
     this.onMainPlaylistSelect = null;
     this.onCreatePlaylist = null;
+    this.onRenamePlaylist = null;
     this.onDeletePlaylist = null;
     this.onSelectPlaylist = null;
     this.onAddTrack = null;
     this.onRemoveTrack = null;
+    this.onMoveTrack = null;
+
+    this.draggedTrackIndex = null;
 
     this.bindEvents();
   }
@@ -113,7 +123,19 @@ export class PlaylistUI {
     });
 
     this.closeBtn.addEventListener("click", () => {
-      this.onClose?.();
+      this.requestClose();
+    });
+
+    this.panel.addEventListener("click", (event) => {
+      if (event.target === this.panel) {
+        this.requestClose();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !this.panel.hidden) {
+        this.requestClose();
+      }
     });
 
     this.createForm.addEventListener("submit", (event) => {
@@ -122,7 +144,18 @@ export class PlaylistUI {
     });
 
     this.deletePlaylistBtn.addEventListener("click", () => {
-      this.onDeletePlaylist?.();
+      const shouldDelete = window.confirm(
+        `"${this.playlistName.textContent}" 플레이리스트를 삭제하시겠습니까?`
+      );
+
+      if (shouldDelete) {
+        this.onDeletePlaylist?.();
+      }
+    });
+
+    this.renamePlaylistForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.onRenamePlaylist?.(this.renamePlaylistInput.value);
     });
 
     this.addTrackForm.addEventListener("submit", (event) => {
@@ -146,6 +179,90 @@ export class PlaylistUI {
 
       if (button) {
         this.onRemoveTrack?.(Number(button.dataset.trackIndex));
+      }
+    });
+
+    this.trackList.addEventListener("dragstart", (event) => {
+      const handle = event.target.closest("[data-drag-index]");
+
+      if (!handle) {
+        event.preventDefault();
+        return;
+      }
+
+      this.draggedTrackIndex = Number(handle.dataset.dragIndex);
+
+      const item = handle.closest(".managed-track-item");
+      item?.classList.add("dragging");
+
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", handle.dataset.dragIndex);
+      }
+    });
+
+    this.trackList.addEventListener("dragover", (event) => {
+      if (this.draggedTrackIndex === null) {
+        return;
+      }
+
+      const item = event.target.closest(".managed-track-item");
+
+      if (!item) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+
+      const rect = item.getBoundingClientRect();
+      const position =
+        event.clientY < rect.top + rect.height / 2
+          ? "before"
+          : "after";
+
+      this.clearDropGuides();
+      item.classList.add(`drop-${position}`);
+    });
+
+    this.trackList.addEventListener("drop", (event) => {
+      const item = event.target.closest(".managed-track-item");
+
+      if (this.draggedTrackIndex === null || !item) {
+        this.resetTrackDragState();
+        return;
+      }
+
+      event.preventDefault();
+
+      const targetIndex = Number(item.dataset.trackIndex);
+      const rect = item.getBoundingClientRect();
+      const insertAfter =
+        event.clientY >= rect.top + rect.height / 2;
+      const insertionIndex = targetIndex + (insertAfter ? 1 : 0);
+      const toIndex =
+        insertionIndex > this.draggedTrackIndex
+          ? insertionIndex - 1
+          : insertionIndex;
+      const fromIndex = this.draggedTrackIndex;
+
+      this.resetTrackDragState();
+
+      if (fromIndex !== toIndex) {
+        this.onMoveTrack?.(fromIndex, toIndex);
+      }
+    });
+
+    this.trackList.addEventListener("dragend", () => {
+      this.resetTrackDragState();
+    });
+
+    this.trackList.addEventListener("dragleave", (event) => {
+      if (!this.trackList.contains(event.relatedTarget)) {
+        this.clearDropGuides();
       }
     });
   }
@@ -268,11 +385,21 @@ export class PlaylistUI {
   }
 
   open() {
+    this.closeMainSelector();
     this.panel.hidden = false;
+    this.openBtn.setAttribute("aria-expanded", "true");
+    this.closeBtn.focus();
   }
 
   close() {
     this.panel.hidden = true;
+    this.openBtn.setAttribute("aria-expanded", "false");
+    this.resetTrackDragState();
+  }
+
+  requestClose() {
+    this.onClose?.();
+    this.openBtn.focus();
   }
 
   renderPlaylists(playlists, selectedKey) {
@@ -301,17 +428,22 @@ export class PlaylistUI {
   }
 
   renderPlaylistDetails(playlist) {
+    this.resetTrackDragState();
     this.trackList.innerHTML = "";
 
     if (!playlist) {
       this.playlistName.textContent = "플레이리스트 선택";
       this.deletePlaylistBtn.hidden = true;
+      this.renamePlaylistForm.hidden = true;
+      this.renamePlaylistInput.value = "";
       this.addTrackForm.hidden = true;
       return;
     }
 
     this.playlistName.textContent = playlist.name;
     this.deletePlaylistBtn.hidden = false;
+    this.renamePlaylistForm.hidden = false;
+    this.renamePlaylistInput.value = playlist.name;
     this.addTrackForm.hidden = false;
 
     if (playlist.tracks.length === 0) {
@@ -325,10 +457,24 @@ export class PlaylistUI {
 
     playlist.tracks.forEach((track, index) => {
       const item = document.createElement("li");
+      const dragHandle = document.createElement("span");
       const title = document.createElement("span");
       const removeBtn = document.createElement("button");
 
       item.className = "managed-track-item";
+      item.dataset.trackIndex = String(index);
+
+      dragHandle.className = "managed-track-drag-handle";
+      dragHandle.dataset.dragIndex = String(index);
+      dragHandle.draggable = true;
+      dragHandle.textContent = "≡";
+      dragHandle.title = "드래그하여 순서 변경";
+      dragHandle.setAttribute(
+        "aria-label",
+        `${track.title} 순서 변경`
+      );
+
+      title.className = "managed-track-title";
       title.textContent = track.title;
 
       removeBtn.type = "button";
@@ -336,10 +482,27 @@ export class PlaylistUI {
       removeBtn.textContent = "삭제";
       removeBtn.setAttribute("aria-label", `${track.title} 삭제`);
 
+      item.appendChild(dragHandle);
       item.appendChild(title);
       item.appendChild(removeBtn);
       this.trackList.appendChild(item);
     });
+  }
+
+  clearDropGuides() {
+    this.trackList
+      .querySelectorAll(".drop-before, .drop-after")
+      .forEach((item) => {
+        item.classList.remove("drop-before", "drop-after");
+      });
+  }
+
+  resetTrackDragState() {
+    this.draggedTrackIndex = null;
+    this.clearDropGuides();
+    this.trackList
+      .querySelectorAll(".dragging")
+      .forEach((item) => item.classList.remove("dragging"));
   }
 
   setMessage(message, type = "") {

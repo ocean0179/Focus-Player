@@ -61,17 +61,6 @@ player.onStateChange = (state) => {
   }
 };
 
-player.onReady = () => {
-  if (currentPlaylistKey) {
-    changePlaylist(currentPlaylistKey);
-    return;
-  }
-
-  setNoPlaylistState();
-};
-
-player.initialize();
-
 function changePlaylist(playlistKey) {
   const playlist = playlistManager.getPlaylist(playlistKey);
 
@@ -89,7 +78,7 @@ function changePlaylist(playlistKey) {
   );
 
   if (videoIds.length === 0) {
-    player.clearPlaylist();
+    player.clear();
     ui.updateTrackTitle("플레이리스트에 곡이 없습니다.");
     ui.updatePlayerControlsEnabled(false);
     renderMainPlaylistSelector();
@@ -107,9 +96,9 @@ function setNoPlaylistState() {
   currentPlaylistKey = null;
 
   Storage.removeLastPlaylist();
-  player.clearPlaylist();
+  player.clear();
 
-  ui.updateTrackTitle("재생할 플레이리스트가 없습니다.");
+  ui.updateTrackTitle("재생 중인 음악 없음");
   ui.updatePlayerControlsEnabled(false);
 
   renderMainPlaylistSelector();
@@ -240,32 +229,26 @@ timer.onComplete = () => {
 
   saveHistory();
 
-  sessionManager.moveToNextSession();
+  sessionManager.completeCurrentSession();
+  applyNextSession();
+};
 
+function applyNextSession() {
   timer.reset(sessionManager.getCurrentDuration());
 
   renderSession();
   ui.updateTimerControls(timer.getState());
 
   const nextType = sessionManager.getCurrentType();
+  const shouldAutoStart =
+    (nextType === "break" && settings.autoStartBreak) ||
+    (nextType === "focus" && settings.autoStartFocus);
 
-  if (
-    nextType === "break" &&
-    settings.autoStartBreak
-  ) {
-    timer.start();
-    ui.updateTimerControls(timer.getState());
-    return;
-  }
-
-  if (
-    nextType === "focus" &&
-    settings.autoStartFocus
-  ) {
+  if (shouldAutoStart) {
     timer.start();
     ui.updateTimerControls(timer.getState());
   }
-};
+}
 
 window.addEventListener("beforeunload", () => {
   saveHistory();
@@ -287,10 +270,19 @@ ui.pauseBtn.addEventListener("click", () => {
 });
 
 ui.endBtn.addEventListener("click", () => {
-  timer.reset(sessionManager.getCurrentDuration());
   saveHistory();
 
-  ui.updateTimerControls(timer.getState());
+  const skippedType = sessionManager.getCurrentType();
+
+  sessionManager.skipCurrentSession();
+
+  ui.updateSessionMessage(
+    skippedType === "focus"
+      ? "집중 세션을 종료하고 휴식으로 이동했습니다."
+      : "휴식 세션을 종료하고 다음 집중으로 이동했습니다."
+  );
+
+  applyNextSession();
 });
 
 ui.volumeSlider.addEventListener("input", () => {
@@ -418,6 +410,42 @@ playlistUI.onCreatePlaylist = (name) => {
   }
 };
 
+playlistUI.onRenamePlaylist = (name) => {
+  if (!managedPlaylistKey) {
+    playlistUI.setMessage(
+      "이름을 변경할 플레이리스트를 선택하세요.",
+      "error"
+    );
+    return;
+  }
+
+  if (name.trim() === "") {
+    playlistUI.setMessage(
+      "플레이리스트 이름을 입력하세요.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    playlistManager.renamePlaylist(managedPlaylistKey, name);
+
+    renderPlaylistManager();
+    renderMainPlaylistSelector();
+    playlistUI.setMessage(
+      "플레이리스트 이름을 변경했습니다.",
+      "success"
+    );
+  } catch (error) {
+    playlistUI.setMessage(
+      error.message.includes("already exists")
+        ? "같은 이름의 플레이리스트가 이미 있습니다."
+        : "플레이리스트 이름을 변경하지 못했습니다.",
+      "error"
+    );
+  }
+};
+
 playlistUI.onDeletePlaylist = () => {
   if (!managedPlaylistKey) {
     playlistUI.setMessage(
@@ -491,8 +519,8 @@ playlistUI.onAddTrack = (url, title) => {
     return;
   }
 
-  if (title.trim() === "") {
-    playlistUI.setMessage("곡 제목을 입력하세요.", "error");
+  if (typeof title !== "string" || title.trim() === "") {
+    playlistUI.setMessage("곡 제목을 입력해주세요.", "error");
     return;
   }
 
@@ -511,8 +539,13 @@ playlistUI.onAddTrack = (url, title) => {
     renderPlaylistManager();
     renderMainPlaylistSelector();
     playlistUI.setMessage("곡을 추가했습니다.", "success");
-  } catch {
-    playlistUI.setMessage("곡을 추가하지 못했습니다.", "error");
+  } catch (error) {
+    playlistUI.setMessage(
+      error.code === "DUPLICATE_TRACK"
+        ? "이미 이 플레이리스트에 추가된 영상입니다."
+        : "곡을 추가하지 못했습니다.",
+      "error"
+    );
   }
 };
 
@@ -529,6 +562,35 @@ playlistUI.onRemoveTrack = (trackIndex) => {
     playlistUI.setMessage("곡을 삭제했습니다.", "success");
   } catch {
     playlistUI.setMessage("곡을 삭제하지 못했습니다.", "error");
+  }
+};
+
+playlistUI.onMoveTrack = (fromIndex, toIndex) => {
+  try {
+    playlistManager.moveTrack(
+      managedPlaylistKey,
+      fromIndex,
+      toIndex
+    );
+
+    const reorderedPlaylist = playlistManager.getPlaylist(
+      managedPlaylistKey
+    );
+
+    if (managedPlaylistKey === currentPlaylistKey) {
+      player.syncPlaylistOrder(
+        reorderedPlaylist.tracks.map((track) => track.videoId)
+      );
+    }
+
+    renderPlaylistManager();
+    playlistUI.setMessage("곡 순서를 변경했습니다.", "success");
+  } catch {
+    renderPlaylistManager();
+    playlistUI.setMessage(
+      "곡 순서를 변경하지 못했습니다.",
+      "error"
+    );
   }
 };
 

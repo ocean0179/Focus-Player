@@ -4,6 +4,16 @@
   padding: 0;
 }
 
+:root {
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --space-7: 64px;
+}
+
 html,
 body {
   width: 100%;
@@ -12,7 +22,8 @@ body {
 
 body {
   font-family: Arial, sans-serif;
-  background: #111;
+  background:
+    radial-gradient(circle at 50% 0%, #191919 0, #111 42%, #0d0d0d 100%);
   color: #f5f5f5;
 }
 
@@ -21,15 +32,29 @@ button {
 }
 
 .app {
-  width: min(1100px, 92%);
+  position: relative;
+
+  width: min(960px, 92%);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 48px 0;
+  padding: 92px 0 var(--space-7);
 
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 48px;
+  gap: var(--space-7);
+}
+
+.app-header {
+  position: absolute;
+  top: 28px;
+  left: 0;
+
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .focus-section,
@@ -41,19 +66,32 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-3);
 }
 
 .session-mode {
-  font-size: 1rem;
+  padding: 7px 14px;
+
+  border: 1px solid #34303f;
+  border-radius: 999px;
+
+  background: #211e2a;
+  color: #b8a7ff;
+
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.12em;
 }
 
 .timer {
-  font-size: clamp(5rem, 14vw, 10rem);
+  margin: var(--space-1) 0;
+
+  font-size: clamp(5.5rem, 14vw, 10.5rem);
   line-height: 1;
   font-weight: 700;
+  letter-spacing: -0.055em;
+
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.32);
 }
 
 .session-info {
@@ -69,18 +107,40 @@ button {
 .player-controls {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-2);
 }
 
 .music-section {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: var(--space-4);
+
   display: flex;
   flex-direction: column;
+  gap: var(--space-3);
+
+  border: 1px solid #313131;
+  border-radius: 22px;
+
+  background: linear-gradient(145deg, #191919, #151515);
+
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.music-toolbar,
+.music-footer {
+  display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .player-container {
-  width: min(640px, 100%);
+  position: relative;
+
+  width: 100%;
   aspect-ratio: 16 / 9;
 }
 
@@ -96,10 +156,103 @@ button {
 }
 
 .music-info {
-  text-align: center;
+  min-width: 0;
+  text-align: left;
 }
 
 #trackTitle {
-  font-size: 0.95rem;
-  opacity: 0.8;
+  overflow: hidden;
+
+  color: #ededed;
+
+  font-size: 1rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 701px) and (max-height: 1200px) {
+  .app {
+    padding: clamp(20px, 4vh, 40px) 0;
+    gap: clamp(20px, 3vh, 32px);
+  }
+
+  .app-header {
+    top: clamp(16px, 3vh, 28px);
+  }
+
+  .focus-section {
+    gap: clamp(10px, 1.5vh, 16px);
+  }
+
+  .timer {
+    margin: 0;
+    font-size: clamp(6rem, 14vh, 8.5rem);
+  }
+
+  .music-section {
+    width: min(712px, 100%);
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .player-container {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (min-width: 701px) and (max-height: 1000px) {
+  .music-section {
+    width: min(632px, 100%);
+  }
+}
+
+@media (min-width: 701px) and (max-height: 900px) {
+  .app {
+    padding: 23px 0;
+    gap: 20px;
+  }
+
+  .timer {
+    font-size: clamp(6rem, 12vh, 7rem);
+  }
+
+  .music-section {
+    width: min(592px, 100%);
+  }
+
+  .main-playlist-toggle {
+    min-width: 160px;
+  }
+
+  .volume-control {
+    grid-template-columns: 38px 100px 30px;
+  }
+}
+
+@media (max-width: 700px) {
+  .app {
+    width: min(94%, 960px);
+    padding-top: 84px;
+    gap: var(--space-6);
+  }
+
+  .music-section {
+    padding: var(--space-3);
+  }
+
+  .music-toolbar,
+  .music-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .music-footer {
+    gap: var(--space-4);
+  }
+
+  .music-info {
+    text-align: center;
+  }
 }

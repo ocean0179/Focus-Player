@@ -3,16 +3,31 @@ export class YouTubePlayer {
     this.elementId = elementId;
     this.volume = volume;
 
+    const mountElement = document.getElementById(elementId);
+    this.mountParent = mountElement?.parentElement ?? null;
+
     this.player = null;
     this.ready = false;
     this.hasPlaylist = false;
+    this.initializing = false;
+    this.initializationGeneration = 0;
+    this.pendingVideoIds = null;
 
     this.onReady = null;
     this.onStateChange = null;
   }
 
   initialize(videoId = null) {
+    if (this.ready || this.initializing) return;
+
+    this.initializing = true;
+    const generation = this.initializationGeneration;
+
     this.loadAPI().then(() => {
+      if (generation !== this.initializationGeneration) return;
+
+      this.ensureMountElement();
+
       const playerOptions = {
         width: "100%",
         height: "100%",
@@ -25,8 +40,16 @@ export class YouTubePlayer {
 
         events: {
           onReady: () => {
+            if (generation !== this.initializationGeneration) return;
+
             this.ready = true;
+            this.initializing = false;
             this.player.setVolume(this.volume);
+
+            if (this.pendingVideoIds) {
+              this.cuePlaylist(this.pendingVideoIds);
+              this.pendingVideoIds = null;
+            }
 
             if (this.onReady) {
               this.onReady();
@@ -52,14 +75,23 @@ export class YouTubePlayer {
 
   loadPlaylist(videoIds) {
     if (!Array.isArray(videoIds) || videoIds.length === 0) {
-      this.clearPlaylist();
+      this.clear();
       return;
     }
 
     this.hasPlaylist = true;
+    this.pendingVideoIds = [...videoIds];
 
-    if (!this.ready) return;
+    if (!this.ready) {
+      this.initialize();
+      return;
+    }
 
+    this.cuePlaylist(this.pendingVideoIds);
+    this.pendingVideoIds = null;
+  }
+
+  cuePlaylist(videoIds) {
     this.player.cuePlaylist({
       playlist: videoIds,
       index: 0,
@@ -67,12 +99,74 @@ export class YouTubePlayer {
     });
   }
 
-  clearPlaylist() {
-    this.hasPlaylist = false;
-
-    if (this.ready) {
-      this.player.stopVideo();
+  syncPlaylistOrder(videoIds) {
+    if (!Array.isArray(videoIds) || videoIds.length === 0) {
+      this.clear();
+      return;
     }
+
+    this.hasPlaylist = true;
+
+    if (!this.ready) return;
+
+    const videoData = this.player.getVideoData();
+    const currentVideoId = videoData?.video_id ?? null;
+    const preservedIndex = videoIds.indexOf(currentVideoId);
+    const nextIndex = preservedIndex >= 0 ? preservedIndex : 0;
+    const currentTime =
+      preservedIndex >= 0 ? this.player.getCurrentTime() : 0;
+    const state = this.player.getPlayerState();
+    const playlistOptions = {
+      playlist: videoIds,
+      index: nextIndex,
+      startSeconds: currentTime,
+    };
+
+    if (
+      state === YT.PlayerState.PLAYING ||
+      state === YT.PlayerState.BUFFERING
+    ) {
+      this.player.loadPlaylist(playlistOptions);
+      return;
+    }
+
+    this.player.cuePlaylist(playlistOptions);
+  }
+
+  clear() {
+    this.hasPlaylist = false;
+    this.pendingVideoIds = null;
+    this.initializationGeneration += 1;
+    this.initializing = false;
+
+    if (this.player && typeof this.player.destroy === "function") {
+      this.player.destroy();
+    }
+
+    this.player = null;
+    this.ready = false;
+    this.ensureMountElement();
+  }
+
+  clearPlaylist() {
+    this.clear();
+  }
+
+  ensureMountElement() {
+    const currentElement = document.getElementById(this.elementId);
+
+    if (currentElement && currentElement.tagName !== "IFRAME") return;
+
+    if (currentElement) {
+      currentElement.remove();
+    }
+
+    if (!this.mountParent) return;
+
+    const mountElement = document.createElement("div");
+    mountElement.id = this.elementId;
+    mountElement.textContent = "YouTube Player";
+    this.mountParent.appendChild(mountElement);
   }
 
 getPlaylistIndex() {

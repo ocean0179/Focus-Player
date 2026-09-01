@@ -6,6 +6,8 @@ export class UI {
     this.sessionMode = document.getElementById("sessionMode");
     this.sessionCount = document.getElementById("sessionCount");
     this.todayFocusTime = document.getElementById("todayFocusTime");
+    this.sessionMessage = document.getElementById("sessionMessage");
+    this.sessionMessageTimeoutId = null;
 
     this.startBtn = document.getElementById("startBtn");
     this.pauseBtn = document.getElementById("pauseBtn");
@@ -47,6 +49,8 @@ export class UI {
     this.closeStatsBtn = document.getElementById("closeStatsBtn");  
 
     this.weeklyChart = document.getElementById("weeklyChart");
+
+    this.setupUtilityPanels();
   }
 
   updateTimer(seconds) {
@@ -61,14 +65,26 @@ export class UI {
     this.sessionCount.textContent = `Session ${count}`;
   }
 
-    updateSessionMessage(message) {
-    const messageElement = document.getElementById("sessionMessage");
-
-    if (!messageElement) {
+  updateSessionMessage(message) {
+    if (!this.sessionMessage) {
       return;
     }
 
-    messageElement.textContent = message;
+    if (this.sessionMessageTimeoutId !== null) {
+      clearTimeout(this.sessionMessageTimeoutId);
+      this.sessionMessageTimeoutId = null;
+    }
+
+    this.sessionMessage.textContent = message;
+
+    if (message === "") {
+      return;
+    }
+
+    this.sessionMessageTimeoutId = setTimeout(() => {
+      this.sessionMessage.textContent = "";
+      this.sessionMessageTimeoutId = null;
+    }, 3000);
   }
 
   updateTodayFocusTime(seconds) {
@@ -150,11 +166,15 @@ export class UI {
     this.autoStartFocusInput.checked =
       settings.autoStartFocus;
 
+    this.closeStats();
     this.settingsPanel.hidden = false;
+    this.settingsBtn.setAttribute("aria-expanded", "true");
+    this.closeSettingsBtn.focus();
   }
 
   closeSettings() {
     this.settingsPanel.hidden = true;
+    this.settingsBtn.setAttribute("aria-expanded", "false");
   }
 
   openStats(records) {
@@ -174,11 +194,45 @@ export class UI {
       this.statsList.appendChild(item);
     });
 
+    this.closeSettings();
     this.statsPanel.hidden = false;
+    this.statsBtn.setAttribute("aria-expanded", "true");
+    this.closeStatsBtn.focus();
   }
 
   closeStats() {
     this.statsPanel.hidden = true;
+    this.statsBtn.setAttribute("aria-expanded", "false");
+  }
+
+  setupUtilityPanels() {
+    [this.settingsPanel, this.statsPanel].forEach((panel) => {
+      panel.addEventListener("click", (event) => {
+        if (event.target !== panel) return;
+
+        if (panel === this.settingsPanel) {
+          this.closeSettings();
+          return;
+        }
+
+        this.closeStats();
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+
+      if (!this.settingsPanel.hidden) {
+        this.closeSettings();
+        this.settingsBtn.focus();
+        return;
+      }
+
+      if (!this.statsPanel.hidden) {
+        this.closeStats();
+        this.statsBtn.focus();
+      }
+    });
   }
 
   renderWeeklyChart(records) {
