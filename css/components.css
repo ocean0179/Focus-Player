@@ -1,0 +1,508 @@
+button {
+  border: 1px solid #343434;
+  border-radius: 10px;
+  padding: 10px 18px;
+
+  background: #2a2a2a;
+  color: #f5f5f5;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+
+button:hover {
+  background: #343434;
+  border-color: #444;
+}
+
+button:active {
+  background: #222;
+
+  transform: translateY(1px) scale(0.98);
+
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 2px 5px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+button:focus-visible {
+  outline: 2px solid #f5f5f5;
+  outline-offset: 3px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+
+  transform: none;
+}
+
+button:disabled:hover,
+button:disabled:active {
+  background: #2a2a2a;
+  border-color: #343434;
+
+  transform: none;
+
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* 시작 버튼 */
+
+#startBtn {
+  background: #f5f5f5;
+  color: #111;
+
+  font-weight: 700;
+
+  border-color: #f5f5f5;
+}
+
+#startBtn:hover:not(:disabled) {
+  background: #dddddd;
+}
+
+#startBtn:active:not(:disabled) {
+  background: #cccccc;
+}
+
+/* 타이머 */
+
+.timer-controls {
+  margin-top: 8px;
+}
+
+/* 세션 정보 */
+
+.session-info {
+  padding: 8px 14px;
+
+  border: 1px solid #292929;
+  border-radius: 999px;
+
+  background: #181818;
+}
+
+/* YouTube 플레이어 */
+
+.player-container {
+  overflow: hidden;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 16px;
+
+  background: #1a1a1a;
+}
+
+#youtubePlayer {
+  color: #777;
+
+  font-size: 0.9rem;
+}
+
+/* 음악 정보 */
+
+.music-info {
+  min-height: 24px;
+}
+
+/* 음악 제어 버튼 */
+
+.player-controls button {
+  min-width: 88px;
+}
+
+/* 플레이리스트 */
+
+.playlist-selector {
+  display: flex;
+
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 8px;
+}
+
+.playlist-selector button {
+  padding: 8px 14px;
+}
+
+.playlist-selector button.selected {
+  background: #f5f5f5;
+  color: #111;
+
+  border-color: #f5f5f5;
+
+  font-weight: 700;
+}
+
+.playlist-selector button.selected:hover {
+  background: #f5f5f5;
+  border-color: #f5f5f5;
+}
+
+/* 볼륨 영역 */
+
+.volume-control {
+  display: grid;
+
+  grid-template-columns: 48px 190px 36px;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+.volume-control label {
+  width: 48px;
+
+  text-align: right;
+
+  font-size: 0.95rem;
+
+  opacity: 0.8;
+}
+
+/* 볼륨 슬라이더 */
+
+.volume-control input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+
+  width: 190px;
+  height: 6px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    to right,
+    #f5f5f5 0%,
+    #f5f5f5 var(--volume-percent),
+    #2a2a2a var(--volume-percent),
+    #2a2a2a 100%
+  );
+
+  cursor: pointer;
+
+  outline: none;
+}
+
+.volume-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+
+  border-radius: 999px;
+
+  background: transparent;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+
+  width: 17px;
+  height: 17px;
+
+  margin-top: -5.5px;
+
+  border: 2px solid #111;
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.4);
+
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+
+  box-shadow:
+    0 2px 7px rgba(0, 0, 0, 0.4),
+    0 0 0 5px rgba(255, 255, 255, 0.06);
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+/* Firefox */
+
+.volume-control input[type="range"]::-moz-range-track {
+  height: 6px;
+
+  border-radius: 999px;
+
+  background: #2a2a2a;
+}
+
+.volume-control input[type="range"]::-moz-range-progress {
+  height: 6px;
+
+  border-radius: 999px;
+
+  background: #f5f5f5;
+}
+
+.volume-control input[type="range"]::-moz-range-thumb {
+  width: 17px;
+  height: 17px;
+
+  border: 2px solid #111;
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.4);
+
+  cursor: pointer;
+}
+
+/* 볼륨 숫자 */
+
+#volumeValue {
+  width: 36px;
+
+  text-align: right;
+
+  font-size: 0.95rem;
+
+  opacity: 0.85;
+
+  font-variant-numeric: tabular-nums;
+}
+
+
+#sessionMessage {
+  min-height: 24px;
+  font-size: 0.95rem;
+  opacity: 0.75;
+  text-align: center;
+}
+
+.settings-panel {
+  width: min(420px, 100%);
+  margin: 0 auto;
+  padding: 20px;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 16px;
+
+  background: #181818;
+}
+
+.settings-panel h2 {
+  margin-bottom: 16px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+.setting-row input[type="number"] {
+  width: 80px;
+
+  padding: 8px 10px;
+
+  border: 1px solid #343434;
+  border-radius: 8px;
+
+  background: #222;
+  color: #f5f5f5;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  margin-top: 18px;
+}
+
+.stats-panel {
+  width: min(520px, 100%);
+  margin: 0 auto;
+  padding: 20px;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 16px;
+
+  background: #181818;
+}
+
+.stats-panel h2 {
+  margin-bottom: 16px;
+}
+
+#statsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-item {
+  display: grid;
+  grid-template-columns: 1fr 100px 100px;
+  gap: 12px;
+
+  padding: 10px 12px;
+
+  border: 1px solid #292929;
+  border-radius: 10px;
+
+  background: #202020;
+}
+
+.stats-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: 16px;
+}
+
+/* 최근 7일 차트 */
+
+.weekly-chart {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 10px;
+
+  height: 180px;
+
+  margin-bottom: 20px;
+  padding: 16px 10px 8px;
+
+  border: 1px solid #2b2b2b;
+  border-radius: 14px;
+
+  background: #161616;
+}
+
+.chart-item {
+  position: relative;
+
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+
+  gap: 8px;
+
+  min-width: 0;
+}
+
+.chart-item:focus-visible {
+  outline: 2px solid #f5f5f5;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.chart-bar-wrapper {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chart-bar {
+  width: min(28px, 70%);
+  min-height: 4px;
+
+  border-radius: 8px 8px 4px 4px;
+
+  background: #f5f5f5;
+
+  opacity: 0.9;
+
+  transition:
+    height 0.3s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.chart-item:hover .chart-bar {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.chart-item.today .chart-bar {
+  background: #7dd3fc;
+
+  box-shadow: 0 0 14px rgba(125, 211, 252, 0.3);
+}
+
+.chart-item.today .chart-label {
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: calc(100% - 8px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  width: max-content;
+  max-width: 150px;
+  padding: 8px 10px;
+
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+
+  background: #242424;
+  color: #f5f5f5;
+
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: left;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.chart-item:hover .chart-tooltip,
+.chart-item:focus-visible .chart-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.chart-label {
+  font-size: 0.8rem;
+  color: #8f8f8f;
+
+  font-variant-numeric: tabular-nums;
+}
