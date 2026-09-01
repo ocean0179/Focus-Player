@@ -1,9 +1,9 @@
-import { PLAYLISTS } from "../data/playlists.js";
 import { Storage } from "./storage.js";
 
 export class PlaylistManager {
-  constructor(defaultPlaylists = PLAYLISTS) {
-    this.playlists = Storage.loadUserPlaylists(defaultPlaylists);
+  constructor() {
+    Storage.clearLegacyPlaylistData();
+    this.playlists = Storage.loadUserPlaylists();
   }
 
   getAllPlaylists() {
@@ -34,6 +34,32 @@ export class PlaylistManager {
     this.save();
 
     return this.getPlaylist(normalizedKey);
+  }
+
+  createPlaylistFromName(name) {
+    const normalizedName = this.validateName(name);
+    const hasSameName = Object.values(this.playlists).some(
+      (playlist) =>
+        playlist.name.toLocaleLowerCase() ===
+        normalizedName.toLocaleLowerCase()
+    );
+
+    if (hasSameName) {
+      throw new Error(`Playlist name already exists: ${normalizedName}`);
+    }
+
+    const keyPrefix = `USER_${Date.now().toString(36).toUpperCase()}`;
+    let key = keyPrefix;
+    let suffix = 1;
+
+    while (Object.hasOwn(this.playlists, key)) {
+      key = `${keyPrefix}_${suffix}`;
+      suffix += 1;
+    }
+
+    this.createPlaylist(key, normalizedName);
+
+    return key;
   }
 
   renamePlaylist(key, name) {

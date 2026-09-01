@@ -56,6 +56,11 @@ export class Storage {
   }
 
   static saveLastPlaylist(playlistKey) {
+    if (!playlistKey) {
+      this.removeLastPlaylist();
+      return;
+    }
+
     localStorage.setItem(
       STORAGE_KEY.LAST_PLAYLIST,
       playlistKey
@@ -63,10 +68,11 @@ export class Storage {
   }
 
   static loadLastPlaylist() {
-    return (
-      localStorage.getItem(STORAGE_KEY.LAST_PLAYLIST) ??
-      "SWM"
-    );
+    return localStorage.getItem(STORAGE_KEY.LAST_PLAYLIST);
+  }
+
+  static removeLastPlaylist() {
+    localStorage.removeItem(STORAGE_KEY.LAST_PLAYLIST);
   }
 
   static saveUserPlaylists(playlists) {
@@ -76,27 +82,39 @@ export class Storage {
     );
   }
 
-  static loadUserPlaylists(defaultPlaylists) {
-    const fallback = this.clonePlaylists(defaultPlaylists);
+  static loadUserPlaylists() {
     const saved = localStorage.getItem(
       STORAGE_KEY.USER_PLAYLISTS
     );
 
     if (!saved) {
-      return fallback;
+      return {};
     }
 
     try {
       const playlists = JSON.parse(saved);
 
       if (!this.isValidPlaylistCollection(playlists)) {
-        return fallback;
+        return {};
       }
 
       return this.clonePlaylists(playlists);
     } catch {
-      return fallback;
+      return {};
     }
+  }
+
+  static clearLegacyPlaylistData() {
+    const legacyPlaylists = localStorage.getItem(
+      STORAGE_KEY.LEGACY_USER_PLAYLISTS
+    );
+
+    if (legacyPlaylists === null) {
+      return;
+    }
+
+    localStorage.removeItem(STORAGE_KEY.LEGACY_USER_PLAYLISTS);
+    this.removeLastPlaylist();
   }
 
   static clonePlaylists(playlists) {

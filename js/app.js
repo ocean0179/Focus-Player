@@ -4,10 +4,13 @@ import { SessionManager } from "./session.js";
 import { UI } from "./ui.js";
 import { YouTubePlayer } from "./player.js";
 import { PlaylistManager } from "./playlistManager.js";
+import { PlaylistUI } from "./playlistUI.js";
 import { Storage } from "./storage.js";
 import { TIMER_STATE } from "./config/constants.js";
+import { extractYouTubeVideoId } from "./utils/youtube.js";
 
 const ui = new UI();
+const playlistUI = new PlaylistUI();
 const settings = Storage.loadSettings();
 const playlistManager = new PlaylistManager();
 
@@ -28,8 +31,11 @@ const timer = new Timer(sessionManager.getCurrentDuration());
 let currentPlaylistKey = Storage.loadLastPlaylist();
 
 if (!playlistManager.getPlaylist(currentPlaylistKey)) {
-  currentPlaylistKey = "SWM";
+  currentPlaylistKey = null;
+  Storage.removeLastPlaylist();
 }
+
+let managedPlaylistKey = currentPlaylistKey;
 
 const player = new YouTubePlayer(
   "youtubePlayer",
@@ -56,15 +62,21 @@ player.onStateChange = (state) => {
 };
 
 player.onReady = () => {
-  changePlaylist(currentPlaylistKey);
+  if (currentPlaylistKey) {
+    changePlaylist(currentPlaylistKey);
+    return;
+  }
+
+  setNoPlaylistState();
 };
 
-player.initialize("l5EnBBrt284");
+player.initialize();
 
 function changePlaylist(playlistKey) {
   const playlist = playlistManager.getPlaylist(playlistKey);
 
   if (!playlist) {
+    setNoPlaylistState();
     return;
   }
 
@@ -76,10 +88,31 @@ function changePlaylist(playlistKey) {
     (track) => track.videoId
   );
 
+  if (videoIds.length === 0) {
+    player.clearPlaylist();
+    ui.updateTrackTitle("플레이리스트에 곡이 없습니다.");
+    ui.updatePlayerControlsEnabled(false);
+    renderMainPlaylistSelector();
+    return;
+  }
+
   player.loadPlaylist(videoIds);
 
   ui.updateTrackTitle(playlist.tracks[0].title);
-  ui.updatePlaylistSelection(currentPlaylistKey);
+  ui.updatePlayerControlsEnabled(true);
+  renderMainPlaylistSelector();
+}
+
+function setNoPlaylistState() {
+  currentPlaylistKey = null;
+
+  Storage.removeLastPlaylist();
+  player.clearPlaylist();
+
+  ui.updateTrackTitle("재생할 플레이리스트가 없습니다.");
+  ui.updatePlayerControlsEnabled(false);
+
+  renderMainPlaylistSelector();
 }
 
 function updateCurrentTrackTitle() {
@@ -155,6 +188,26 @@ function getWeeklyChartData(days = 7) {
     heightPercent:
       (record.totalFocusTime / maxFocusTime) * 100,
   }));
+}
+
+function renderPlaylistManager() {
+  const playlists = playlistManager.getAllPlaylists();
+
+  if (!playlistManager.getPlaylist(managedPlaylistKey)) {
+    managedPlaylistKey = Object.keys(playlists)[0] ?? null;
+  }
+
+  playlistUI.renderPlaylists(playlists, managedPlaylistKey);
+  playlistUI.renderPlaylistDetails(
+    playlistManager.getPlaylist(managedPlaylistKey)
+  );
+}
+
+function renderMainPlaylistSelector() {
+  playlistUI.renderMainPlaylistSelector(
+    playlistManager.getAllPlaylists(),
+    currentPlaylistKey
+  );
 }
 
 timer.onTick = (remainingTime) => {
@@ -266,16 +319,6 @@ ui.nextBtn.addEventListener("click", () => {
   player.next();
 });
 
-ui.playlistButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const playlistKey = button.dataset.playlist;
-
-    console.log("Playlist clicked:", playlistKey);
-
-    changePlaylist(playlistKey);
-  });
-});
-
 ui.settingsBtn.addEventListener("click", () => {
   ui.openSettings(settings);
 });
@@ -323,5 +366,176 @@ ui.closeStatsBtn.addEventListener("click", () => {
   ui.closeStats();
 });
 
+playlistUI.onOpen = () => {
+  managedPlaylistKey = playlistManager.getPlaylist(
+    currentPlaylistKey
+  )
+    ? currentPlaylistKey
+    : managedPlaylistKey;
+
+  playlistUI.setMessage("");
+  renderPlaylistManager();
+  playlistUI.open();
+};
+
+playlistUI.onClose = () => {
+  playlistUI.close();
+};
+
+playlistUI.onMainPlaylistSelect = (playlistKey) => {
+  changePlaylist(playlistKey);
+};
+
+playlistUI.onCreatePlaylist = (name) => {
+  if (name.trim() === "") {
+    playlistUI.setMessage(
+      "플레이리스트 이름을 입력하세요.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    managedPlaylistKey =
+      playlistManager.createPlaylistFromName(name);
+
+    playlistUI.clearCreateInput();
+
+    if (!currentPlaylistKey) {
+      changePlaylist(managedPlaylistKey);
+    }
+
+    renderPlaylistManager();
+    renderMainPlaylistSelector();
+    playlistUI.setMessage("플레이리스트를 생성했습니다.", "success");
+  } catch (error) {
+    playlistUI.setMessage(
+      error.message.includes("already exists")
+        ? "같은 이름의 플레이리스트가 이미 있습니다."
+        : "플레이리스트를 생성하지 못했습니다.",
+      "error"
+    );
+  }
+};
+
+playlistUI.onDeletePlaylist = () => {
+  if (!managedPlaylistKey) {
+    playlistUI.setMessage(
+      "삭제할 플레이리스트를 선택하세요.",
+      "error"
+    );
+    return;
+  }
+
+  const deletedKey = managedPlaylistKey;
+
+  try {
+    playlistManager.deletePlaylist(deletedKey);
+
+    const remainingKeys = Object.keys(
+      playlistManager.getAllPlaylists()
+    );
+
+    managedPlaylistKey = remainingKeys[0] ?? null;
+
+    if (currentPlaylistKey === deletedKey) {
+      if (managedPlaylistKey) {
+        changePlaylist(managedPlaylistKey);
+      } else {
+        setNoPlaylistState();
+      }
+    } else {
+      renderMainPlaylistSelector();
+    }
+
+    renderPlaylistManager();
+    playlistUI.setMessage(
+      "플레이리스트를 삭제했습니다.",
+      "success"
+    );
+  } catch {
+    playlistUI.setMessage(
+      "플레이리스트를 삭제하지 못했습니다.",
+      "error"
+    );
+  }
+};
+
+playlistUI.onSelectPlaylist = (playlistKey) => {
+  if (!playlistManager.getPlaylist(playlistKey)) {
+    playlistUI.setMessage(
+      "플레이리스트를 찾을 수 없습니다.",
+      "error"
+    );
+    return;
+  }
+
+  managedPlaylistKey = playlistKey;
+  playlistUI.setMessage("");
+  renderPlaylistManager();
+};
+
+playlistUI.onAddTrack = (url, title) => {
+  if (!managedPlaylistKey) {
+    playlistUI.setMessage("플레이리스트를 선택하세요.", "error");
+    return;
+  }
+
+  const videoId = extractYouTubeVideoId(url);
+
+  if (!videoId) {
+    playlistUI.setMessage(
+      "올바른 YouTube URL을 입력하세요.",
+      "error"
+    );
+    return;
+  }
+
+  if (title.trim() === "") {
+    playlistUI.setMessage("곡 제목을 입력하세요.", "error");
+    return;
+  }
+
+  try {
+    playlistManager.addTrack(managedPlaylistKey, {
+      videoId,
+      title,
+    });
+
+    playlistUI.clearTrackInputs();
+
+    if (managedPlaylistKey === currentPlaylistKey) {
+      changePlaylist(currentPlaylistKey);
+    }
+
+    renderPlaylistManager();
+    renderMainPlaylistSelector();
+    playlistUI.setMessage("곡을 추가했습니다.", "success");
+  } catch {
+    playlistUI.setMessage("곡을 추가하지 못했습니다.", "error");
+  }
+};
+
+playlistUI.onRemoveTrack = (trackIndex) => {
+  try {
+    playlistManager.removeTrack(managedPlaylistKey, trackIndex);
+
+    if (managedPlaylistKey === currentPlaylistKey) {
+      changePlaylist(currentPlaylistKey);
+    }
+
+    renderPlaylistManager();
+    renderMainPlaylistSelector();
+    playlistUI.setMessage("곡을 삭제했습니다.", "success");
+  } catch {
+    playlistUI.setMessage("곡을 삭제하지 못했습니다.", "error");
+  }
+};
+
 renderSession();
+if (currentPlaylistKey) {
+  changePlaylist(currentPlaylistKey);
+} else {
+  setNoPlaylistState();
+}
 

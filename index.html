@@ -49,9 +49,32 @@
     </section>
 
     <section class="music-section">
-      <div class="playlist-selector">
-        <button type="button" data-playlist="SWM">SWM</button>
-        <button type="button" data-playlist="OST_ASMR">OST</button>
+      <div class="playlist-actions">
+        <div class="main-playlist-selector" id="mainPlaylistSelector">
+          <button
+            type="button"
+            class="main-playlist-toggle"
+            id="mainPlaylistToggle"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="mainPlaylistDropdown"
+          >
+            <span id="currentPlaylistName">플레이리스트 선택</span>
+            <span class="main-playlist-arrow" aria-hidden="true">▾</span>
+          </button>
+
+          <div
+            class="main-playlist-dropdown"
+            id="mainPlaylistDropdown"
+            role="listbox"
+            aria-label="플레이리스트 선택"
+            hidden
+          ></div>
+        </div>
+
+        <button type="button" id="managePlaylistsBtn">
+          플레이리스트 관리
+        </button>
       </div>
 
       <div class="volume-control">
@@ -82,6 +105,88 @@
         <button type="button" id="prevBtn">이전</button>
         <button type="button" id="playPauseBtn">재생</button>
         <button type="button" id="nextBtn">다음</button>
+      </div>
+    </section>
+
+    <section
+      class="playlist-manager-panel"
+      id="playlistManagerPanel"
+      hidden
+    >
+      <div class="playlist-manager-header">
+        <h2>플레이리스트 관리</h2>
+        <button type="button" id="closePlaylistManagerBtn">
+          닫기
+        </button>
+      </div>
+
+      <p
+        class="playlist-manager-message"
+        id="playlistManagerMessage"
+        role="status"
+        aria-live="polite"
+      ></p>
+
+      <div class="playlist-manager-layout">
+        <div class="playlist-manager-sidebar">
+          <h3>플레이리스트</h3>
+          <div
+            class="managed-playlist-list"
+            id="managedPlaylistList"
+          ></div>
+
+          <form id="createPlaylistForm">
+            <label for="newPlaylistName">새 플레이리스트</label>
+            <div class="playlist-manager-input-row">
+              <input
+                type="text"
+                id="newPlaylistName"
+                placeholder="플레이리스트 이름"
+                maxlength="60"
+              />
+              <button type="submit">생성</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="playlist-manager-detail">
+          <div class="managed-playlist-detail-header">
+            <h3 id="managedPlaylistName">플레이리스트 선택</h3>
+            <button
+              type="button"
+              id="deleteManagedPlaylistBtn"
+              hidden
+            >
+              플레이리스트 삭제
+            </button>
+          </div>
+
+          <ul
+            class="managed-track-list"
+            id="managedTrackList"
+          ></ul>
+
+          <form id="addTrackForm" hidden>
+            <h4>곡 추가</h4>
+
+            <label for="trackUrlInput">YouTube URL</label>
+            <input
+              type="url"
+              id="trackUrlInput"
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+
+            <label for="trackTitleInput">곡 제목</label>
+            <input
+              type="text"
+              id="trackTitleInput"
+              placeholder="곡 제목"
+              maxlength="120"
+            />
+
+            <button type="submit">곡 추가</button>
+          </form>
+        </div>
       </div>
     </section>
 

@@ -13,5 +13,6 @@ export const STORAGE_KEY = {
   SETTINGS: "focus-player.settings",
   HISTORY: "focus-player.history",
   LAST_PLAYLIST: "focus-player.last-playlist",
-  USER_PLAYLISTS: "focus-player.user-playlists",
+  USER_PLAYLISTS: "focus-player.user-playlists.v2",
+  LEGACY_USER_PLAYLISTS: "focus-player.user-playlists",
 };

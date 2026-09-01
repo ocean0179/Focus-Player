@@ -20,10 +20,6 @@ export class UI {
     this.volumeSlider = document.getElementById("volumeSlider");
     this.volumeValue = document.getElementById("volumeValue");
 
-    this.playlistButtons = document.querySelectorAll(
-      "[data-playlist]"
-    );
-
     this.settingsBtn = document.getElementById("settingsBtn");
     this.settingsPanel = document.getElementById("settingsPanel");
 
@@ -83,13 +79,14 @@ export class UI {
     this.trackTitle.textContent = title;
   }
 
-  updatePlaylistSelection(selectedKey) {
-    this.playlistButtons.forEach((button) => {
-      const isSelected =
-        button.dataset.playlist === selectedKey;
+  updatePlayerControlsEnabled(enabled) {
+    this.prevBtn.disabled = !enabled;
+    this.playPauseBtn.disabled = !enabled;
+    this.nextBtn.disabled = !enabled;
 
-      button.classList.toggle("selected", isSelected);
-    });
+    if (!enabled) {
+      this.playPauseBtn.textContent = "재생";
+    }
   }
 
   updateVolume(volume) {

@@ -5,17 +5,17 @@ export class YouTubePlayer {
 
     this.player = null;
     this.ready = false;
+    this.hasPlaylist = false;
 
     this.onReady = null;
     this.onStateChange = null;
   }
 
-  initialize(videoId) {
+  initialize(videoId = null) {
     this.loadAPI().then(() => {
-      this.player = new YT.Player(this.elementId, {
+      const playerOptions = {
         width: "100%",
         height: "100%",
-        videoId,
 
         playerVars: {
           autoplay: 0,
@@ -39,12 +39,25 @@ export class YouTubePlayer {
             }
           },
         },
-      });
+      };
+
+      if (videoId) {
+        playerOptions.videoId = videoId;
+      }
+
+      this.player = new YT.Player(this.elementId, playerOptions);
     });
   }
   
 
   loadPlaylist(videoIds) {
+    if (!Array.isArray(videoIds) || videoIds.length === 0) {
+      this.clearPlaylist();
+      return;
+    }
+
+    this.hasPlaylist = true;
+
     if (!this.ready) return;
 
     this.player.cuePlaylist({
@@ -54,8 +67,16 @@ export class YouTubePlayer {
     });
   }
 
+  clearPlaylist() {
+    this.hasPlaylist = false;
+
+    if (this.ready) {
+      this.player.stopVideo();
+    }
+  }
+
 getPlaylistIndex() {
-  if (!this.ready) {
+  if (!this.ready || !this.hasPlaylist) {
     return -1;
   }
 
@@ -87,7 +108,7 @@ getPlaylistIndex() {
   }
 
   getState() {
-    if (!this.ready) {
+    if (!this.ready || !this.hasPlaylist) {
       return null;
     }
 
@@ -95,7 +116,7 @@ getPlaylistIndex() {
   }
 
   togglePlayPause() {
-    if (!this.ready) return;
+    if (!this.ready || !this.hasPlaylist) return;
 
     const state = this.player.getPlayerState();
 
@@ -108,25 +129,25 @@ getPlaylistIndex() {
   }
 
   play() {
-    if (!this.ready) return;
+    if (!this.ready || !this.hasPlaylist) return;
 
     this.player.playVideo();
   }
 
   pause() {
-    if (!this.ready) return;
+    if (!this.ready || !this.hasPlaylist) return;
 
     this.player.pauseVideo();
   }
 
   next() {
-    if (!this.ready) return;
+    if (!this.ready || !this.hasPlaylist) return;
 
     this.player.nextVideo();
   }
 
   previous() {
-    if (!this.ready) return;
+    if (!this.ready || !this.hasPlaylist) return;
 
     this.player.previousVideo();
   }
