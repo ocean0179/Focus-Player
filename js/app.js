@@ -3,12 +3,13 @@ import { Timer } from "./timer.js";
 import { SessionManager } from "./session.js";
 import { UI } from "./ui.js";
 import { YouTubePlayer } from "./player.js";
-import { PLAYLISTS } from "../data/playlists.js";
+import { PlaylistManager } from "./playlistManager.js";
 import { Storage } from "./storage.js";
 import { TIMER_STATE } from "./config/constants.js";
 
 const ui = new UI();
 const settings = Storage.loadSettings();
+const playlistManager = new PlaylistManager();
 
 const sessionManager = new SessionManager(settings);
 
@@ -26,7 +27,7 @@ const timer = new Timer(sessionManager.getCurrentDuration());
 
 let currentPlaylistKey = Storage.loadLastPlaylist();
 
-if (!PLAYLISTS[currentPlaylistKey]) {
+if (!playlistManager.getPlaylist(currentPlaylistKey)) {
   currentPlaylistKey = "SWM";
 }
 
@@ -61,7 +62,7 @@ player.onReady = () => {
 player.initialize("l5EnBBrt284");
 
 function changePlaylist(playlistKey) {
-  const playlist = PLAYLISTS[playlistKey];
+  const playlist = playlistManager.getPlaylist(playlistKey);
 
   if (!playlist) {
     return;
@@ -89,7 +90,10 @@ function updateCurrentTrackTitle() {
     return;
   }
 
-  const track = PLAYLISTS[currentPlaylistKey].tracks[index];
+  const playlist = playlistManager.getPlaylist(
+    currentPlaylistKey
+  );
+  const track = playlist?.tracks[index];
 
   if (!track) {
     ui.updateTrackTitle("알 수 없는 음악");
