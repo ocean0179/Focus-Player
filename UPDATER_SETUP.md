@@ -47,7 +47,13 @@ $env:FOCUS_PLAYER_UPDATE_BASE_URL = "https://downloads.example.com/focus-player/
 npm run manifest:update
 ```
 
-생성 파일은 `release/latest.json`이며 Git 추적 대상이 아니다. GitHub Release에는 NSIS installer, 해당 `.sig`, `latest.json`을 함께 올린다.
+manifest script는 Tauri가 실제 생성한 현재 버전 NSIS와 `.sig`를 확인한다. 이후 GitHub가 파일명을 임의로 정규화하지 않도록 공백을 점으로 바꾼 업로드용 파일을 `release/`에 복사한다. `latest.json` URL은 이 staged 파일명을 그대로 사용한다.
+
+생성되는 필수 업로드 파일은 다음 세 개이며 모두 `release/`에 있다.
+
+- `Focus.Player_<VERSION>_x64-setup.exe`
+- `Focus.Player_<VERSION>_x64-setup.exe.sig`
+- `latest.json`
 
 GitHub repository가 public으로 전환되어 `src-tauri/tauri.conf.json`에 다음 고정 endpoint를 연결했다.
 

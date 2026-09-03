@@ -13,10 +13,15 @@ function getLatestManifestEndpoint() {
   return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPOSITORY}/releases/latest/download/latest.json`;
 }
 
+function getGitHubAssetFileName(fileName) {
+  return fileName.trim().replace(/\s+/g, ".");
+}
+
 module.exports = {
   GITHUB_OWNER,
   GITHUB_REPOSITORY,
   getGitHubReleaseBaseUrl,
+  getGitHubAssetFileName,
   getLatestManifestEndpoint,
   getReleaseTag,
 };

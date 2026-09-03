@@ -880,6 +880,17 @@ button:disabled:active {
   min-width: 0;
 }
 
+.app-version {
+  margin-top: 20px;
+  padding-top: 14px;
+
+  border-top: 1px solid #292929;
+
+  color: #777;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
 /* 앱 업데이트 */
 
 .update-panel {

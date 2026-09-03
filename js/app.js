@@ -9,10 +9,12 @@ import { Storage } from "./storage.js";
 import { TIMER_STATE } from "./config/constants.js";
 import { extractYouTubeVideoId } from "./utils/youtube.js";
 import { initializeFullscreenShortcut } from "./desktop/fullscreen.js";
+import { initializeAppVersion } from "./desktop/appVersion.js";
 import { initializeUpdater } from "./desktop/updater.js";
 import { UpdateUI } from "./updateUI.js";
 
 initializeFullscreenShortcut();
+initializeAppVersion(document.getElementById("appVersion"));
 
 const ui = new UI();
 const playlistUI = new PlaylistUI();
