@@ -1,1 +1,9 @@
 node_modules/
+dist/
+release/
+.env
+.env.*
+!.env.example
+updater-keys/
+*.key
+*.key.pub

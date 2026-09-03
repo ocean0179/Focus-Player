@@ -517,7 +517,9 @@ button:disabled:active {
   line-height: 1;
 
   cursor: grab;
+  touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .managed-track-drag-handle:hover {
@@ -531,6 +533,10 @@ button:disabled:active {
 .managed-track-item.dragging {
   border-color: #555;
   opacity: 0.45;
+}
+
+.managed-track-item.dragging .managed-track-drag-handle {
+  cursor: grabbing;
 }
 
 .managed-track-item.drop-before {

@@ -8,6 +8,9 @@ import { PlaylistUI } from "./playlistUI.js";
 import { Storage } from "./storage.js";
 import { TIMER_STATE } from "./config/constants.js";
 import { extractYouTubeVideoId } from "./utils/youtube.js";
+import { initializeFullscreenShortcut } from "./desktop/fullscreen.js";
+
+initializeFullscreenShortcut();
 
 const ui = new UI();
 const playlistUI = new PlaylistUI();

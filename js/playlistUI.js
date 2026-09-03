@@ -60,6 +60,9 @@ export class PlaylistUI {
     this.onMoveTrack = null;
 
     this.draggedTrackIndex = null;
+    this.dragPointerId = null;
+    this.trackDropIndex = null;
+    this.activeDragHandle = null;
 
     this.bindEvents();
   }
@@ -175,94 +178,30 @@ export class PlaylistUI {
     });
 
     this.trackList.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-track-index]");
+      const button = event.target.closest(
+        '[data-action="delete-track"]'
+      );
 
-      if (button) {
+      if (button && this.trackList.contains(button)) {
         this.onRemoveTrack?.(Number(button.dataset.trackIndex));
       }
     });
 
-    this.trackList.addEventListener("dragstart", (event) => {
-      const handle = event.target.closest("[data-drag-index]");
-
-      if (!handle) {
-        event.preventDefault();
-        return;
-      }
-
-      this.draggedTrackIndex = Number(handle.dataset.dragIndex);
-
-      const item = handle.closest(".managed-track-item");
-      item?.classList.add("dragging");
-
-      if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", handle.dataset.dragIndex);
-      }
+    this.trackList.addEventListener("pointerdown", (event) => {
+      this.startTrackPointerDrag(event);
     });
 
-    this.trackList.addEventListener("dragover", (event) => {
-      if (this.draggedTrackIndex === null) {
-        return;
-      }
-
-      const item = event.target.closest(".managed-track-item");
-
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (event.dataTransfer) {
-        event.dataTransfer.dropEffect = "move";
-      }
-
-      const rect = item.getBoundingClientRect();
-      const position =
-        event.clientY < rect.top + rect.height / 2
-          ? "before"
-          : "after";
-
-      this.clearDropGuides();
-      item.classList.add(`drop-${position}`);
+    this.trackList.addEventListener("pointermove", (event) => {
+      this.updateTrackPointerDrag(event);
     });
 
-    this.trackList.addEventListener("drop", (event) => {
-      const item = event.target.closest(".managed-track-item");
+    this.trackList.addEventListener("pointerup", (event) => {
+      this.finishTrackPointerDrag(event);
+    });
 
-      if (this.draggedTrackIndex === null || !item) {
+    this.trackList.addEventListener("pointercancel", (event) => {
+      if (event.pointerId === this.dragPointerId) {
         this.resetTrackDragState();
-        return;
-      }
-
-      event.preventDefault();
-
-      const targetIndex = Number(item.dataset.trackIndex);
-      const rect = item.getBoundingClientRect();
-      const insertAfter =
-        event.clientY >= rect.top + rect.height / 2;
-      const insertionIndex = targetIndex + (insertAfter ? 1 : 0);
-      const toIndex =
-        insertionIndex > this.draggedTrackIndex
-          ? insertionIndex - 1
-          : insertionIndex;
-      const fromIndex = this.draggedTrackIndex;
-
-      this.resetTrackDragState();
-
-      if (fromIndex !== toIndex) {
-        this.onMoveTrack?.(fromIndex, toIndex);
-      }
-    });
-
-    this.trackList.addEventListener("dragend", () => {
-      this.resetTrackDragState();
-    });
-
-    this.trackList.addEventListener("dragleave", (event) => {
-      if (!this.trackList.contains(event.relatedTarget)) {
-        this.clearDropGuides();
       }
     });
   }
@@ -465,8 +404,8 @@ export class PlaylistUI {
       item.dataset.trackIndex = String(index);
 
       dragHandle.className = "managed-track-drag-handle";
-      dragHandle.dataset.dragIndex = String(index);
-      dragHandle.draggable = true;
+      dragHandle.dataset.action = "reorder-track";
+      dragHandle.dataset.trackIndex = String(index);
       dragHandle.textContent = "≡";
       dragHandle.title = "드래그하여 순서 변경";
       dragHandle.setAttribute(
@@ -478,6 +417,7 @@ export class PlaylistUI {
       title.textContent = track.title;
 
       removeBtn.type = "button";
+      removeBtn.dataset.action = "delete-track";
       removeBtn.dataset.trackIndex = String(index);
       removeBtn.textContent = "삭제";
       removeBtn.setAttribute("aria-label", `${track.title} 삭제`);
@@ -497,8 +437,99 @@ export class PlaylistUI {
       });
   }
 
+  startTrackPointerDrag(event) {
+    const handle = event.target.closest(
+      '[data-action="reorder-track"]'
+    );
+
+    if (
+      !handle ||
+      !this.trackList.contains(handle) ||
+      !event.isPrimary ||
+      event.button !== 0
+    ) {
+      return;
+    }
+
+    const trackIndex = Number(handle.dataset.trackIndex);
+
+    if (!Number.isInteger(trackIndex)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    this.draggedTrackIndex = trackIndex;
+    this.dragPointerId = event.pointerId;
+    this.trackDropIndex = trackIndex;
+    this.activeDragHandle = handle;
+
+    handle.setPointerCapture(event.pointerId);
+    handle.closest(".managed-track-item")?.classList.add("dragging");
+  }
+
+  updateTrackPointerDrag(event) {
+    if (event.pointerId !== this.dragPointerId) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const item = target?.closest(".managed-track-item");
+
+    if (!item || !this.trackList.contains(item)) {
+      this.trackDropIndex = null;
+      this.clearDropGuides();
+      return;
+    }
+
+    const targetIndex = Number(item.dataset.trackIndex);
+    const rect = item.getBoundingClientRect();
+    const insertAfter = event.clientY >= rect.top + rect.height / 2;
+    const insertionIndex = targetIndex + (insertAfter ? 1 : 0);
+
+    this.trackDropIndex =
+      insertionIndex > this.draggedTrackIndex
+        ? insertionIndex - 1
+        : insertionIndex;
+
+    this.clearDropGuides();
+    item.classList.add(insertAfter ? "drop-after" : "drop-before");
+  }
+
+  finishTrackPointerDrag(event) {
+    if (event.pointerId !== this.dragPointerId) {
+      return;
+    }
+
+    const fromIndex = this.draggedTrackIndex;
+    const toIndex = this.trackDropIndex;
+
+    this.resetTrackDragState();
+
+    if (
+      Number.isInteger(fromIndex) &&
+      Number.isInteger(toIndex) &&
+      fromIndex !== toIndex
+    ) {
+      this.onMoveTrack?.(fromIndex, toIndex);
+    }
+  }
+
   resetTrackDragState() {
+    if (
+      this.activeDragHandle &&
+      this.dragPointerId !== null &&
+      this.activeDragHandle.hasPointerCapture(this.dragPointerId)
+    ) {
+      this.activeDragHandle.releasePointerCapture(this.dragPointerId);
+    }
+
     this.draggedTrackIndex = null;
+    this.dragPointerId = null;
+    this.trackDropIndex = null;
+    this.activeDragHandle = null;
     this.clearDropGuides();
     this.trackList
       .querySelectorAll(".dragging")

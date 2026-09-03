@@ -1,13 +1,14 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Focus Player",
-  "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "version": "0.1.1",
+  "identifier": "com.ocean.focusplayer",
   "build": {
-    "frontendDist": "..",
+    "frontendDist": "../dist",
     "devUrl": "http://127.0.0.1:5500"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Focus Player",
@@ -23,6 +24,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "icon": [
       "icons/32x32.png",
@@ -33,6 +35,11 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVBQjgxRDRCNjIwODYzMUYKUldRZll3aGlTeDI0NmlyVUNhSkFOTkcwUVI0S1UydDBXYUM1MGlXUFcwcW1Vai9PYWpYRjBGakIK"
     }
   }
 }
