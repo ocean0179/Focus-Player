@@ -9,11 +9,14 @@ import { Storage } from "./storage.js";
 import { TIMER_STATE } from "./config/constants.js";
 import { extractYouTubeVideoId } from "./utils/youtube.js";
 import { initializeFullscreenShortcut } from "./desktop/fullscreen.js";
+import { initializeUpdater } from "./desktop/updater.js";
+import { UpdateUI } from "./updateUI.js";
 
 initializeFullscreenShortcut();
 
 const ui = new UI();
 const playlistUI = new PlaylistUI();
+const updateUI = new UpdateUI();
 const settings = Storage.loadSettings();
 const playlistManager = new PlaylistManager();
 
@@ -603,4 +606,6 @@ if (currentPlaylistKey) {
 } else {
   setNoPlaylistState();
 }
+
+initializeUpdater(updateUI);
 

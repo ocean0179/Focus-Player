@@ -1,5 +1,9 @@
 const path = require("node:path");
 const { mkdir, readFile, writeFile } = require("node:fs/promises");
+const {
+  getGitHubReleaseBaseUrl,
+  getReleaseTag,
+} = require("./release-config.js");
 
 const projectRoot = path.resolve(__dirname, "..");
 const bundleRoot = path.join(projectRoot, "src-tauri", "target", "release", "bundle");
@@ -11,13 +15,14 @@ function getReleaseAssetUrl(baseUrl, fileName) {
 }
 
 async function createManifest() {
-  const baseUrl = process.env.FOCUS_PLAYER_UPDATE_BASE_URL?.trim();
-
-  if (!baseUrl) {
-    throw new Error(
-      "FOCUS_PLAYER_UPDATE_BASE_URL을 설정해야 합니다. 예: https://github.com/OWNER/REPO/releases/download/v0.1.1"
-    );
-  }
+  const packageJson = JSON.parse(
+    await readFile(path.join(projectRoot, "package.json"), "utf8")
+  );
+  const version = packageJson.version;
+  const tag = getReleaseTag(version);
+  const baseUrl =
+    process.env.FOCUS_PLAYER_UPDATE_BASE_URL?.trim() ||
+    getGitHubReleaseBaseUrl(version);
 
   let parsedBaseUrl;
   try {
@@ -30,10 +35,6 @@ async function createManifest() {
     throw new Error("Updater asset URL은 HTTPS를 사용해야 합니다.");
   }
 
-  const packageJson = JSON.parse(
-    await readFile(path.join(projectRoot, "package.json"), "utf8")
-  );
-  const version = packageJson.version;
   const installerName = `Focus Player_${version}_x64-setup.exe`;
   const installerPath = path.join(bundleRoot, "nsis", installerName);
   const signaturePath = `${installerPath}.sig`;
@@ -58,6 +59,8 @@ async function createManifest() {
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   console.log(`Updater manifest 생성 완료: ${outputPath}`);
+  console.log(`Release tag: ${tag}`);
+  console.log(`Release asset base URL: ${baseUrl}`);
   console.log(`Updater artifact: ${installerPath}`);
 }
 
@@ -69,4 +72,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { getReleaseAssetUrl };
+module.exports = { createManifest, getReleaseAssetUrl };

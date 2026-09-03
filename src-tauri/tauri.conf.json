@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Focus Player",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "identifier": "com.ocean.focusplayer",
   "build": {
     "frontendDist": "../dist",
@@ -39,7 +39,10 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVBQjgxRDRCNjIwODYzMUYKUldRZll3aGlTeDI0NmlyVUNhSkFOTkcwUVI0S1UydDBXYUM1MGlXUFcwcW1Vai9PYWpYRjBGakIK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVBQjgxRDRCNjIwODYzMUYKUldRZll3aGlTeDI0NmlyVUNhSkFOTkcwUVI0S1UydDBXYUM1MGlXUFcwcW1Vai9PYWpYRjBGakIK",
+      "endpoints": [
+        "https://github.com/ocean0179/Focus-Player/releases/latest/download/latest.json"
+      ]
     }
   }
 }

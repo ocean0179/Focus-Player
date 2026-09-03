@@ -1,6 +1,6 @@
 {
   "name": "focus-player",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "scripts": {
     "build:web": "node scripts/build-web.js",
     "build:app": "npm run build:web && tauri build --ci",
@@ -16,6 +16,7 @@
     "@tauri-apps/cli": "^2.11.4"
   },
   "dependencies": {
+    "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-updater": "^2.11.0"
   }
 }

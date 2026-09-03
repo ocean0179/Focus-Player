@@ -61,22 +61,16 @@ if (buildStatus !== 0) {
   process.exit(buildStatus);
 }
 
-if (process.env.FOCUS_PLAYER_UPDATE_BASE_URL) {
-  console.log(`[3/3] Focus Player ${nextVersion} updater manifest 생성`);
-  const manifestStatus = runCommand(process.execPath, [
-    path.join(__dirname, "generate-update-manifest.js"),
-  ]);
+console.log(`[3/3] Focus Player ${nextVersion} updater manifest 생성`);
+const manifestStatus = runCommand(process.execPath, [
+  path.join(__dirname, "generate-update-manifest.js"),
+]);
 
-  if (manifestStatus !== 0) {
-    console.error(
-      `Release manifest 생성 실패: ${nextVersion} build와 updater artifact는 생성된 상태입니다.`
-    );
-    process.exit(manifestStatus);
-  }
-} else {
-  console.log(
-    "[3/3] updater manifest 건너뜀: FOCUS_PLAYER_UPDATE_BASE_URL이 설정되지 않았습니다."
+if (manifestStatus !== 0) {
+  console.error(
+    `Release manifest 생성 실패: ${nextVersion} build와 updater artifact는 생성된 상태입니다.`
   );
+  process.exit(manifestStatus);
 }
 
 console.log(`Release 완료: Focus Player ${nextVersion}`);

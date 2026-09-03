@@ -332,8 +332,41 @@
         </div>
       </div>
     </section>
+
+    <section
+      class="utility-panel"
+      id="updatePanel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="updatePanelTitle"
+      hidden
+    >
+      <div class="utility-panel-content update-panel">
+        <div class="utility-panel-header">
+          <h2 id="updatePanelTitle">새로운 버전이 있습니다</h2>
+        </div>
+
+        <dl class="update-version-list">
+          <div>
+            <dt>현재 버전</dt>
+            <dd id="updateCurrentVersion"></dd>
+          </div>
+          <div>
+            <dt>새 버전</dt>
+            <dd id="updateNextVersion"></dd>
+          </div>
+        </dl>
+
+        <p id="updateStatus" class="update-status" role="status" hidden></p>
+
+        <div class="update-actions">
+          <button type="button" id="laterUpdateBtn">나중에</button>
+          <button type="button" id="installUpdateBtn">업데이트</button>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <script type="module" src="./js/app.js?v=0.1.1"></script>
+  <script type="module" src="./js/app.js?v=0.1.2"></script>
 </body>
 </html>
